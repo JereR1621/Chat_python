@@ -2,7 +2,8 @@ import socket
 import threading
 
 class ChatServer:
-    def __init__(self, host='172.29.17.106', port=55555):
+    def __init__(self, host='192.168.0.251', port=55555):
+        
         self.host = host
         self.port = port
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -10,9 +11,15 @@ class ChatServer:
         self.server.listen()
         self.clients = []
         self.nicknames = []
+              
+    def comand(self,signal,sender_client=None):
+        print("SYS>> datos servidor:  "+self.hos+" "+str(self.port))
         
     def broadcast(self, message, sender_client=None):
         for client in self.clients:
+            if(client == None):
+                msgSYS = "SYS>>"+message
+                client.send(msgSYS)
             if client != sender_client:  # Filtro para no enviar el mensaje al cliente que lo envió
                 client.send(message)
     
@@ -25,6 +32,9 @@ class ChatServer:
                     # Desconectar al cliente si envía "exit"
                     self.disconnect_client(client)
                     break
+                elif(message.lower()=="server"):
+                    msg = "Datos servidor: "+self.host+" "+str(self.port)
+                    self.broadcast(msg.encode('utf-8'))
                 else:
                     # Si no es "exit", se considera un mensaje normal
                     self.broadcast(message.encode('utf-8'), sender_client=client)
@@ -46,6 +56,8 @@ class ChatServer:
     
     def receive(self):
         print("Servidor iniciado y escuchando...")
+        print(self.host)
+        print(self.port)
         while True:
             client, address = self.server.accept()
             print(f"Conectado con {str(address)}")
