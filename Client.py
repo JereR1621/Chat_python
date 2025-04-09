@@ -2,7 +2,7 @@ import socket
 import threading
 import re
 class ChatClient:
-    def __init__(self, host='192.168.0.251', port=55555):
+    def __init__(self, host='10.1.5.74', port=55555):
         
         self.estadoConexion = 0
         while(self.estadoConexion==0):
