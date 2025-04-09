@@ -68,7 +68,7 @@ class ChatClient:
             
             try:
                 data =self.client.recv(1024)
-                if(data==0):
+                if not data:
                     print("SYS>> servidor cerrado por host")
                     self.endSignal = 1
                     self.client.close();
@@ -81,7 +81,7 @@ class ChatClient:
                 else:
                     print(message)
             except Exception as e:
-                #print("Error! Conexión cerrada."+str(e))
+                print("Error! Conexión cerrada. error:: "+str(e))
                 self.endSignal = 1
                 self.client.close()
                 break
@@ -95,7 +95,7 @@ class ChatClient:
             if message.lower() == '/exit':
                 # Enviar "exit" al servidor indicando que el cliente se desconecta
                 self.client.send("exit".encode('utf-8'))
-                print("Desconectando...")
+                print("SYS>> Desconectando...")
                 self.endSignal = 1
                 self.client.close()
                 break
