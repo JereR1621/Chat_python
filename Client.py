@@ -32,43 +32,40 @@ class ChatClient:
         return all(0 <= int(p) <= 255 for p in partes)
 
     def serverConect(self,port=55555):
+        serverDefault = "192.168.0.251"
+        self.client.close()
         while True:
-            ipIn = input("IP de servidor deseado... : ")
-            if not self.valIP(ipIn):
-                print("IP invalida")
-                t = input("SYS>> si desea conectar al servidor original introdusca 'T'")
-                if(t != "T"):
-                    continue
-                else:
-                    host = '192.168.0.251'
+            ipIn = input(f"SYS>> Ingrese la ip del servidor que quiere acceder (ENTER para servidor default):   ").strip()
+            if(ipIn == ''):
+                self.host = serverDefault
+            elif(self.valIP(ipIn)):
+                self.host = ipIn
+            else:
+                print("SYS>> ip invalida")
+                continue
             self.estadoConexion = 0
-            while(self.estadoConexion==0):
+            while self.estadoConexion == 0:
                 try:
-                    self.host = host
-                    self.port = port
+                    #self.port = port
                     self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.client.connect((host, port))
+                    self.client.connect((self.host, self.port))
                     self.nickname = None
                     self.estadoConexion = 1
+                    print(f'SYS>> Ingresado exitosamente a server '+ipIn)
+                    self.endThreads()
+                    self.start()
+                    return
                 except:
-                    print("SYS>> error, no se a detectado servidor o la IP que esta introducida no es valida")
-                    t = input("SYS>> si desea conectar al servidor original introdusca 'T'")
-                    host = '192.168.0.251'
-                    if(t != "T"):
-                        inpt = input("SYS>> desea conectar a una ip distinta a "+host+"?       Y/n")
-                        if(inpt == "Y"):
-                            ip =     input("..")
-                            if(self.valIP(ip)):
-                                host = ip
-                            else:
-                                print("IP invalida")
-                        elif(inpt == "n"):
-                            return
+                    print("SYS>> Error al ingresar al servidor")
+                    s = input("SYS>> desea ingresar una nueva IP?      Y/n:  ")
+                    if(s != "Y"):
+                        print("Cerrando conexiones....")
+                        return
+                
 
     def receive(self):
-        while True:
-            if(self.endSignal == 1):
-                break
+        while not self.endSignal:
+            
             try:
                 data =self.client.recv(1024)
                 if(data==0):
@@ -90,9 +87,8 @@ class ChatClient:
                 break
     
     def write(self):
-        while True :
-            if(self.endSignal ==1):
-                break
+        while not self.endSignal :
+            
             message = input("")
             if(len(message)<= 0):
                 continue
@@ -107,6 +103,7 @@ class ChatClient:
                 print("SYS>> cambiando servidor...")
                 self.endSignal = 1
                 self.client.close()
+                self.serverConect()
 
                 break
             elif message.lower() == '/ip':
@@ -118,11 +115,23 @@ class ChatClient:
             else:
                 # Enviar mensaje normal al servidor
                 self.client.send(f'{self.nickname}: {message}'.encode('utf-8'))
-    
+    def endThreads(self):
+        try:
+            if(hasattr(self, 'receive_thread') and self.receive_thread.is_alive()):
+                self.endSignal = 1
+                self.receive_thread.join()
+            if(hasattr(self, 'write_thread') and self.write_thread.is_alive()):
+                self.endSignal = 1
+                self.write_thread.join()
+            self.endSignal = 0 # si señan final es 1, verdadero, entonces en "recieve" terminara antes de recibir cualquier error    
+        except:
+            print("aqui")
     def start(self):
         if(self.estadoConexion==0): return
+        ##self.endThreads()
         self.nickname = input("Elige un nickname: ")
         self.endSignal = 0 # si señan final es 1, verdadero, entonces en "recieve" terminara antes de recibir cualquier error
+        
         self.receive_thread = threading.Thread(target=self.receive)
         self.receive_thread.start()
         
