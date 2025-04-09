@@ -2,7 +2,7 @@ import socket
 import threading
 
 class ChatServer:
-    def __init__(self, host='10.1.5.74', port=55555):
+    def __init__(self, host='192.168.0.251', port=55555):
         self.fileSave = open("testFile.txt","w")
         self.fileSave.close()
         self.host = host
@@ -19,10 +19,10 @@ class ChatServer:
         
     def broadcast(self, message, sender_client=None):
         self.fileSave = open("testFile.txt","ab")
-        print(message)
+        self.fileSave.write(message)    
+        self.fileSave.write(b'\n')
         for client in self.clients:
-            self.fileSave.write(message)    
-            self.fileSave.write(b'\n')
+            
             if(client == None):
                 msgSYS = "SYS>>"+message
                 client.send(msgSYS)
@@ -31,13 +31,13 @@ class ChatServer:
                 
         self.fileSave.close(    )
 
-    def cargarMensajes(self,archTxt = None,sender_client = None):
-        self.fileSave = open("testFile.txt",'wb+')
+    def cargarMensajes(self,sender_client = None):
+        self.fileSave = open("testFile.txt",'rb')
         if not self.fileSave.read(1):
             return
-        for line in self.fileSave:
-            tes =line.encode('utf-8')
-            sender_client.send(tes)
+        lines = self.fileSave.readlines()
+        for line in lines:
+            sender_client.send(line)
         self.fileSave.close()
 
 
@@ -88,7 +88,8 @@ class ChatServer:
             print(f"Nickname del cliente es {nickname}!")
             self.broadcast(f"{nickname} se ha unido al chat!".encode('utf-8'))
             client.send('Conectado al servidor!'.encode('utf-8'))
-            self.cargarMensajes(client)
+            self.cargarMensajes(sender_client=client)
+
             thread = threading.Thread(target=self.handle_client, args=(client,))
             thread.start()
     
