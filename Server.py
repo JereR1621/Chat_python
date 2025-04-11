@@ -18,9 +18,14 @@ class ChatServer:
         print("SYS>> datos servidor:  "+self.hos+" "+str(self.port))
         
     def broadcast(self, message, sender_client=None):
+        hora = datetime.now().strftime('%H:%M:%S')
+        hora = f"[{hora}] ".encode('utf-8') + message
         self.fileSave = open("testFile.txt","ab")
+        self.fileSec = open("grabarSeguridad.txt","ab")
         self.fileSave.write(message)    
         self.fileSave.write(b'\n')
+        self.fileSec.write(hora+message)    
+        self.fileSec.write(b'\n')
         for client in self.clients:
             
             if(client == None):
@@ -29,7 +34,9 @@ class ChatServer:
             if client != sender_client:  # Filtro para no enviar el mensaje al cliente que lo envió
                 client.send(message)
                 
-        self.fileSave.close(    )
+        self.fileSave.close()
+        self.fileSec.close()
+
 
     def cargarMensajes(self,sender_client = None):
         self.fileSave = open("testFile.txt",'rb')
